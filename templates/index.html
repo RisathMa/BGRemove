@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Remover</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4fc08d;
+            --error-color: #e74c3c;
+            --bg-color: #f9f9f9;
+            --text-color: #333;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+
+        .browse-btn1 {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    font-weight: bold;
+    margin-bottom: 10px;
+    transition: var(--transition);
+}
+
+.browse-btn1:hover {
+    background-color: var(--secondary-color);
+}
+
+
+
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--secondary-color);
+            font-weight: normal;
+        }
+
+        .upload-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(79, 192, 141, 0.05);
+        }
+
+        .upload-area.highlight {
+            border-color: var(--accent-color);
+            background-color: rgba(79, 192, 141, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .browse-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .browse-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .result-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-title {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .result-img-container {
+            max-width: 100%;
+            margin: 0 auto 20px;
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABZ0RVh0Q3JlYXRpb24gVGltZQAxMC8yOS8xMiKqq3kAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzVxteM2AAAAK0lEQVQ4jWNgYGD4z4AC/jMQAQaGYYAFiKk0E2MGjAYMA8BgjCLQ7PwDyxMAAG3ZBIUUhQwaAAAAAElFTkSuQmCC');
+        }
+
+        .result-img {
+            max-width: 100%;
+            display: block;
+        }
+
+        .download-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .download-btn:hover {
+            background-color: #3da778;
+            transform: translateY(-2px);
+        }
+
+        .process-new-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .process-new-btn:hover {
+            background-color: var(--primary-color);
+        }
+
+        .flash-messages {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+
+        .flash-message.error {
+            background-color: #fce4e4;
+            border-left: 4px solid var(--error-color);
+            color: #a51f1f;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .file-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .upload-container, .result-container {
+                padding: 20px;
+            }
+            .upload-area {
+                padding: 20px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <header> 
+            <a href="https://risathma.github.io/RMCompany/index(Products)%20-%20AfterLog.html" class="browse-btn1">Home</a>
+        
+            <h1>Background Remover</h1>
+            <p class="subtitle">Upload an image to remove its background</p>
+        </header>
+        
+
+        {% if get_flashed_messages() %}
+        <ul class="flash-messages">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+            <li class="flash-message {{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <div id="uploadContainer" class="upload-container" {% if processed_image %}style="display: none;"{% endif %}>
+            <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+                <div id="uploadArea" class="upload-area">
+                    <div class="upload-icon">📷</div>
+                    <h2 class="upload-text">Drag & drop your image here</h2>
+                    <p>or</p>
+                    <span class="browse-btn">Browse files</span>
+                    <input type="file" name="file" id="fileInput" class="file-input" accept="image/jpeg, image/png">
+                    <p class="file-info">Max size: 16MB, Formats: JPG, PNG</p>
+                </div>
+            </form>
+        </div>
+
+        <div id="loadingContainer" class="loading">
+            <div class="spinner"></div>
+            <p>Removing background...</p>
+        </div>
+
+        <div id="resultContainer" class="result-container{% if processed_image %} show{% endif %}">
+            <h2 class="result-title">Background Removed!</h2>
+            <div class="result-img-container">
+                {% if processed_image %}
+                <img src="{{ url_for('preview_file', filename=processed_image) }}" alt="Processed Image" class="result-img">
+                {% endif %}
+            </div>
+            {% if processed_image %}
+            <a href="{{ url_for('download_file', filename=processed_image) }}" class="download-btn">Download Image</a>
+            {% endif %}
+            <button id="processNewBtn" class="process-new-btn">Process Another Image</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>Powered by Flask and rembg | Background Remover Tool</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const uploadForm = document.getElementById('uploadForm');
+            const uploadContainer = document.getElementById('uploadContainer');
+            const resultContainer = document.getElementById('resultContainer');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const processNewBtn = document.getElementById('processNewBtn');
+
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                uploadArea.classList.add('highlight');
+            }
+
+            function unhighlight() {
+                uploadArea.classList.remove('highlight');
+            }
+
+            uploadArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInput.files = files;
+                
+                // Check file type before submitting
+                const file = files[0];
+                if (file && isValidFile(file)) {
+                    uploadForm.submit();
+                    showLoading();
+                } else {
+                    alert('Please upload a valid JPG or PNG image (max 16MB).');
+                }
+            }
+
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (isValidFile(file)) {
+                        uploadForm.submit();
+                        showLoading();
+                    } else {
+                        alert('Please upload a valid JPG or PNG image (max 16MB).');
+                        fileInput.value = '';
+                    }
+                }
+            });
+
+            function isValidFile(file) {
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                const maxSize = 16 * 1024 * 1024; // 16MB
+
+                if (!validTypes.includes(file.type)) {
+                    return false;
+                }
+
+                if (file.size > maxSize) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            function showLoading() {
+                uploadContainer.style.display = 'none';
+                loadingContainer.classList.add('show');
+            }
+
+            processNewBtn.addEventListener('click', function() {
+                resultContainer.classList.remove('show');
+                uploadContainer.style.display = 'block';
+                fileInput.value = '';
+            });
+        });
+    </script>
+</body>
+</html>
