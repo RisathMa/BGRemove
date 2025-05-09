@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from werkzeug.utils import secure_filename
 import os
 import uuid
-import rembg
+from rembg import remove
 from PIL import Image
 import io
 
@@ -32,47 +32,40 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    # Check if the post request has the file part
     if 'file' not in request.files:
         flash('No file part', 'error')
         return redirect(request.url)
     
     file = request.files['file']
     
-    # If user does not select file, browser also
-    # submit an empty part without filename
     if file.filename == '':
         flash('No selected file', 'error')
         return redirect(url_for('index'))
     
     if file and allowed_file(file.filename):
-        # Generate unique filename with UUID
         unique_id = str(uuid.uuid4())
         original_extension = file.filename.rsplit('.', 1)[1].lower()
         filename = secure_filename(f"{unique_id}.{original_extension}")
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        # Save the uploaded file
         file.save(filepath)
         
         try:
-            # Process the image with rembg
-            processed_filename = f"{unique_id}.png"  # Always save as PNG for transparency
+            processed_filename = f"{unique_id}.png"
             processed_filepath = os.path.join(app.config['PROCESSED_FOLDER'], processed_filename)
             
-            # Open the image
             input_image = Image.open(filepath)
             
             # Remove background
-            output_image = rembg.remove(input_image)
+            output_bytes = remove(input_image)
+            output_image = Image.open(io.BytesIO(output_bytes))
             
             # Save the processed image
             output_image.save(processed_filepath, format='PNG')
             
-            # Return success page with image preview and download link
             return render_template('index.html', 
-                                  processed_image=processed_filename,
-                                  unique_id=unique_id)
+                                   processed_image=processed_filename,
+                                   unique_id=unique_id)
         
         except Exception as e:
             flash(f'Error processing image: {str(e)}', 'error')
