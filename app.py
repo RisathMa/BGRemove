@@ -2,9 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from werkzeug.utils import secure_filename
 import os
 import uuid
-from rembg import remove
+import rembg
 from PIL import Image
-import io
+import io  # Import the io module
 
 app = Flask(__name__)
 app.secret_key = 'background-remover-secret-key'
@@ -32,38 +32,53 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    # Check if the post request has the file part
     if 'file' not in request.files:
         flash('No file part', 'error')
         return redirect(request.url)
     
     file = request.files['file']
     
+    # If user does not select file, browser also
+    # submit an empty part without filename
     if file.filename == '':
         flash('No selected file', 'error')
         return redirect(url_for('index'))
     
     if file and allowed_file(file.filename):
+        # Generate unique filename with UUID
         unique_id = str(uuid.uuid4())
         original_extension = file.filename.rsplit('.', 1)[1].lower()
         filename = secure_filename(f"{unique_id}.{original_extension}")
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
+        # Save the uploaded file
         file.save(filepath)
         
         try:
-            processed_filename = f"{unique_id}.png"
+            # Process the image with rembg
+            processed_filename = f"{unique_id}.png"  # Always save as PNG for transparency
             processed_filepath = os.path.join(app.config['PROCESSED_FOLDER'], processed_filename)
             
+            # Open the image
             input_image = Image.open(filepath)
             
+            # Convert PIL Image to bytes
+            img_bytes = io.BytesIO()
+            input_image.save(img_bytes, format=input_image.format)  # Use original format
+            img_bytes = img_bytes.getvalue()
+
             # Remove background
-            output_bytes = remove(input_image)
-            output_image = Image.open(io.BytesIO(output_bytes))
+            output_image = rembg.remove(img_bytes)
+
+            # Convert the result back to a PIL Image
+            output_image = Image.open(io.BytesIO(output_image))
             
             # Save the processed image
             output_image.save(processed_filepath, format='PNG')
             
-            return render_template('index.html', 
+            # Return success page with image preview and download link
+            return render_template('index.html',
                                    processed_image=processed_filename,
                                    unique_id=unique_id)
         
@@ -77,7 +92,7 @@ def upload_file():
 @app.route('/download/<filename>')
 def download_file(filename):
     try:
-        return send_file(os.path.join(app.config['PROCESSED_FOLDER'], filename), 
+        return send_file(os.path.join(app.config['PROCESSED_FOLDER'], filename),
                          mimetype='image/png',
                          as_attachment=True,
                          download_name='background_removed.png')
@@ -88,7 +103,7 @@ def download_file(filename):
 @app.route('/preview/<filename>')
 def preview_file(filename):
     try:
-        return send_file(os.path.join(app.config['PROCESSED_FOLDER'], filename), 
+        return send_file(os.path.join(app.config['PROCESSED_FOLDER'], filename),
                          mimetype='image/png')
     except Exception as e:
         flash(f'Error previewing file: {str(e)}', 'error')
