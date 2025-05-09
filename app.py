@@ -4,18 +4,18 @@ import os
 import uuid
 import rembg
 from PIL import Image
-import io
+import io  # Import the io module
 
 app = Flask(__name__)
 app.secret_key = 'background-remover-secret-key'
 
-# Use temporary folders on Render to avoid write permission issues
-UPLOAD_FOLDER = '/tmp/uploads'
-PROCESSED_FOLDER = '/tmp/processed'
+# Configure upload settings
+UPLOAD_FOLDER = 'uploads'
+PROCESSED_FOLDER = 'processed'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
 
-# Create directories
+# Create directories if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
@@ -35,39 +35,52 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    # Check if the post request has the file part
     if 'file' not in request.files:
         flash('No file part', 'error')
         return redirect(request.url)
 
     file = request.files['file']
 
+    # If the user does not select a file, the browser also
+    # submits an empty part without a filename
     if file.filename == '':
         flash('No selected file', 'error')
         return redirect(url_for('index'))
 
     if file and allowed_file(file.filename):
+        # Generate unique filename with UUID
         unique_id = str(uuid.uuid4())
         original_extension = file.filename.rsplit('.', 1)[1].lower()
         filename = secure_filename(f"{unique_id}.{original_extension}")
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
+        # Save the uploaded file
         file.save(filepath)
 
         try:
-            processed_filename = f"{unique_id}.png"
+            # Process the image with rembg
+            processed_filename = f"{unique_id}.png"  # Always save as PNG for transparency
             processed_filepath = os.path.join(app.config['PROCESSED_FOLDER'], processed_filename)
 
+            # Open the image
             input_image = Image.open(filepath)
 
+            # Convert PIL Image to bytes
             img_bytes = io.BytesIO()
-            input_image.save(img_bytes, format=input_image.format)
+            input_image.save(img_bytes, format=input_image.format)  # Use original format
             img_bytes = img_bytes.getvalue()
 
+            # Remove background
             output_image = rembg.remove(img_bytes)
 
+            # Convert the result back to a PIL Image
             output_image = Image.open(io.BytesIO(output_image))
+
+            # Save the processed image
             output_image.save(processed_filepath, format='PNG')
 
+            # Return success page with image preview and download link
             return render_template('index.html',
                                    processed_image=processed_filename,
                                    unique_id=unique_id)
@@ -78,6 +91,7 @@ def upload_file():
     else:
         flash('File type not allowed. Please upload JPG or PNG images only.', 'error')
         return redirect(url_for('index'))
+
 
 
 @app.route('/download/<filename>')
@@ -92,6 +106,7 @@ def download_file(filename):
         return redirect(url_for('index'))
 
 
+
 @app.route('/preview/<filename>')
 def preview_file(filename):
     try:
@@ -103,5 +118,6 @@ def preview_file(filename):
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    #  Important:  Use 0.0.0.0 to listen on all interfaces, and use the port
+    #  provided by Render (10000).  Remove debug=True for production.
+    app.run(host='0.0.0.0', port=10000, debug=True)  # debug=True is okay for local
