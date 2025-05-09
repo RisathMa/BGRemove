@@ -42,8 +42,8 @@ def upload_file():
 
     file = request.files['file']
 
-    # If the user does not select a file, the browser also
-    # submits an empty part without a filename
+    # If the user does not select file, browser also
+    # submit an empty part without filename
     if file.filename == '':
         flash('No selected file', 'error')
         return redirect(url_for('index'))
@@ -120,4 +120,4 @@ def preview_file(filename):
 if __name__ == '__main__':
     #  Important:  Use 0.0.0.0 to listen on all interfaces, and use the port
     #  provided by Render (10000).  Remove debug=True for production.
-    app.run(host='0.0.0.0', port=10000, debug=True)  # debug=True is okay for local
+    app.run(host='0.0.0.0', port=10000, debug=False)  #  <---  THIS LINE IS CRITICAL
