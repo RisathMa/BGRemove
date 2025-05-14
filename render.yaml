@@ -2,7 +2,15 @@ services:
   - type: web
     name: removebg-photo
     env: python
-    startCommand: python app.py
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.10
+    disks:
+      - name: uploads-disk
+        mountPath: /app/uploads
+        sizeMB: 200  # Adjust size as needed
+      - name: processed-disk
+        mountPath: /app/processed
+        sizeMB: 200  # Adjust size as needed
