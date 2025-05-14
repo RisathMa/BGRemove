@@ -10,7 +10,7 @@ services:
     disks:
       - name: uploads-disk
         mountPath: /app/uploads
-        sizeMB: 200  # Adjust size as needed
+        sizeGB: 1  # Adjust size as needed
       - name: processed-disk
         mountPath: /app/processed
-        sizeMB: 200  # Adjust size as needed
+        sizeGB: 1  # Adjust size as needed
